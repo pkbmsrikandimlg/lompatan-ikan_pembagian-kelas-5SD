@@ -3,264 +3,137 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Lompatan Ikan Pintar - Pembagian Kelas 5</title>
+    <title>Lompatan Ikan - Game Pembagian</title>
+    
+    <!-- Menggunakan Tailwind CSS untuk styling responsif -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Menggunakan Font kustom untuk nuansa game -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700&display=swap');
-        
         body {
             font-family: 'Nunito', sans-serif;
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            background-color: #0f172a;
             margin: 0;
-            overflow: hidden; /* Prevent scrolling */
-            touch-action: none; /* Prevent pinch zoom etc */
+            overflow: hidden; /* Mencegah scrolling */
+            touch-action: none; /* Mencegah pinch-zoom di mobile */
             color: white;
         }
 
-        h1, h2, h3, .brand-font {
+        .brand-font {
             font-family: 'Fredoka One', cursive;
         }
 
-        /* Container for the game canvases */
+        /* Latar Belakang Cuaca/Game */
+        .sky-bg {
+            background: linear-gradient(to bottom, #38bdf8 0%, #e0f2fe 100%);
+        }
+        
+        .night-bg {
+            background: linear-gradient(to bottom, #1e1b4b 0%, #312e81 100%);
+        }
+
         #game-container {
-            display: grid;
+            display: none;
             width: 100vw;
             height: 100vh;
             gap: 4px;
-            background-color: #0f172a; /* Dark border between splits */
             padding: 4px;
             box-sizing: border-box;
-            transition: all 0.3s ease;
+            background-color: #020617; /* Warna pembatas antar layar */
         }
 
-        /* Split screen grid layouts */
         .layout-solo { grid-template-columns: 1fr; grid-template-rows: 1fr; }
         .layout-duel { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr; }
         .layout-squad { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
 
-        /* Mobile Portrait Override for Duel */
+        /* Penyesuaian khusus untuk HP Potret di Mode Duel (Atas-Bawah) */
         @media (max-width: 768px) and (orientation: portrait) {
             .layout-duel { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
         }
 
-        .player-view {
-            position: relative;
-            background: linear-gradient(to bottom, #87CEEB 0%, #4682B4 100%);
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.3);
-        }
-
-        canvas {
-            display: block;
-            width: 100%;
-            height: 100%;
-        }
-
-        /* UI Overlays */
-        .ui-layer {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            pointer-events: none;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            padding: 1rem;
-        }
-
-        .question-box {
-            background: rgba(255, 255, 255, 0.9);
-            color: #1e3a8a;
-            padding: 0.5rem 1rem;
-            border-radius: 999px;
-            font-size: 1.5rem;
-            font-weight: bold;
-            text-align: center;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            border: 3px solid #60a5fa;
-            align-self: center;
-            pointer-events: auto;
-            transition: transform 0.2s;
-        }
-
-        .controls-area {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            pointer-events: auto;
-            margin-bottom: 10px;
-        }
-
+        /* Tombol Jawaban dengan efek 3D Bubble */
         .answer-btn {
-            background: linear-gradient(to bottom, #fcd34d, #f59e0b);
-            border: 3px solid #b45309;
-            border-radius: 12px;
-            color: #78350f;
-            font-family: 'Fredoka One', cursive;
-            font-size: 1.25rem;
-            padding: 0.75rem;
-            text-shadow: 1px 1px 0px rgba(255,255,255,0.5);
-            box-shadow: 0 4px 0 #92400e, 0 5px 5px rgba(0,0,0,0.3);
-            transition: all 0.1s;
-            cursor: pointer;
-            user-select: none;
-            -webkit-tap-highlight-color: transparent;
+            transition: all 0.1s ease;
+            box-shadow: 0 6px 0 #2563eb, 0 8px 10px rgba(0,0,0,0.3);
+            text-shadow: 1px 1px 0 rgba(255,255,255,0.8);
         }
-
         .answer-btn:active {
-            transform: translateY(4px);
-            box-shadow: 0 0 0 #92400e, 0 1px 2px rgba(0,0,0,0.3);
+            transform: translateY(6px);
+            box-shadow: 0 0 0 #2563eb, 0 2px 5px rgba(0,0,0,0.3);
         }
-
         .answer-btn:disabled {
-            opacity: 0.5;
+            opacity: 0.6;
             cursor: not-allowed;
             transform: none;
-            box-shadow: 0 4px 0 #92400e;
-        }
-
-        .player-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: rgba(0,0,0,0.3);
-            padding: 4px 12px;
-            border-radius: 20px;
-            margin-bottom: 10px;
-            backdrop-filter: blur(4px);
-        }
-
-        #main-menu {
-            position: fixed;
-            top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(15, 23, 42, 0.95);
-            z-index: 50;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            backdrop-filter: blur(10px);
-        }
-
-        .menu-card {
-            background: linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%);
-            padding: 2rem;
-            border-radius: 24px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5), inset 0 2px 5px rgba(255,255,255,0.3);
-            border: 4px solid #60a5fa;
-            text-align: center;
-            max-width: 90%;
-            width: 400px;
-        }
-
-        .mode-btn {
-            display: block;
-            width: 100%;
-            margin: 10px 0;
-            padding: 1rem;
-            font-size: 1.25rem;
-            background: #f8fafc;
-            color: #1e40af;
-            border: none;
-            border-radius: 12px;
-            font-family: 'Fredoka One', cursive;
-            cursor: pointer;
-            transition: transform 0.2s, background 0.2s;
-            box-shadow: 0 4px 0 #cbd5e1;
-        }
-        .mode-btn:hover { background: #e2e8f0; transform: translateY(-2px); box-shadow: 0 6px 0 #cbd5e1; }
-        .mode-btn:active { transform: translateY(4px); box-shadow: 0 0 0 #cbd5e1; }
-
-        /* Fullscreen button */
-        #fs-btn {
-            position: fixed;
-            top: 10px; right: 10px;
-            z-index: 100;
-            background: rgba(0,0,0,0.5);
-            color: white;
-            border: 2px solid white;
-            border-radius: 50%;
-            width: 44px; height: 44px;
-            display: flex; justify-content: center; align-items: center;
-            cursor: pointer;
-            font-size: 1.2rem;
-            backdrop-filter: blur(4px);
-        }
-
-        /* Game Over Overlay */
-        .game-over-screen {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.8);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 10;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.5s;
-        }
-        .game-over-screen.active {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        /* Responsive adjustments */
-        @media (max-width: 600px) {
-            .question-box { font-size: 1.2rem; padding: 0.3rem 0.8rem; }
-            .answer-btn { font-size: 1rem; padding: 0.5rem; }
-            .controls-area { grid-template-columns: repeat(4, 1fr); gap: 5px; } /* 4 in a row on small height */
+            box-shadow: 0 6px 0 #2563eb;
         }
     </style>
 </head>
 <body>
 
-    <!-- Fullscreen Toggle -->
-    <button id="fs-btn" onclick="toggleFullScreen()" aria-label="Fullscreen">⛶</button>
+    <div class="fixed top-3 right-3 z-50 flex gap-3">
+        <button id="home-btn" class="hidden bg-white/20 hover:bg-white/40 text-white rounded-full w-10 h-10 flex items-center justify-center backdrop-blur-md border border-white/50 text-xl shadow-lg transition-transform hover:scale-110 active:scale-95" onclick="goHome()" title="Kembali ke Menu">
+            🏠
+        </button>
+        <button id="fs-btn" class="bg-white/20 hover:bg-white/40 text-white rounded-full w-10 h-10 flex items-center justify-center backdrop-blur-md border border-white/50 text-xl shadow-lg transition-transform hover:scale-110 active:scale-95" onclick="toggleFullScreen()" title="Full Screen">
+            ⛶
+        </button>
+    </div>
 
-    <!-- Main Menu -->
-    <div id="main-menu">
-        <div class="menu-card">
-            <h1 class="text-4xl mb-2 text-yellow-300 drop-shadow-md">Lompatan Ikan</h1>
-            <h2 class="text-xl mb-6 text-blue-100">Matematika - Pembagian Kelas 5</h2>
+    <div id="main-menu" class="fixed inset-0 bg-[url('https://placehold.co/1920x1080/0f172a/0f172a')] bg-cover bg-center z-40 flex flex-col items-center justify-center">
+        <!-- Overlay Gradient -->
+        <div class="absolute inset-0 bg-gradient-to-br from-blue-900/90 to-slate-900/95 backdrop-blur-sm"></div>
+        
+        <div class="relative z-10 bg-gradient-to-b from-blue-500 to-blue-700 p-6 md:p-10 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] border-4 border-blue-300 w-[90%] max-w-lg text-center">
             
-            <p class="text-sm mb-4 text-blue-200">Pilih Mode Bermain:</p>
+            <h1 class="text-5xl md:text-6xl text-yellow-300 drop-shadow-[0_4px_4px_rgba(0,0,0,0.5)] mb-3 brand-font leading-tight">Lompatan Ikan!</h1>
+            <h2 class="text-xl md:text-2xl font-bold mb-8 text-blue-50 bg-blue-900/50 inline-block px-4 py-2 rounded-full border border-blue-400">🔢 Matematika: Pembagian Kelas 5</h2>
             
-            <button class="mode-btn" onclick="startGame(1)">👤 Solo (1 Pemain)</button>
-            <button class="mode-btn" onclick="startGame(2)">⚔️ Duel (2 Pemain)</button>
-            <button class="mode-btn" onclick="startGame(4)">🛡️ Squad (4 Pemain)</button>
+            <div class="space-y-4 mb-6">
+                <button onclick="startGame(1)" class="w-full bg-gradient-to-r from-green-400 to-green-500 hover:from-green-500 hover:to-green-600 text-white font-bold text-2xl py-4 rounded-2xl shadow-[0_6px_0_#166534] active:shadow-none active:translate-y-[6px] transition-all brand-font tracking-wide">
+                    👤 Main Solo
+                </button>
+                <button onclick="startGame(2)" class="w-full bg-gradient-to-r from-orange-400 to-orange-500 hover:from-orange-500 hover:to-orange-600 text-white font-bold text-2xl py-4 rounded-2xl shadow-[0_6px_0_#9a3412] active:shadow-none active:translate-y-[6px] transition-all brand-font tracking-wide">
+                    ⚔️ Mode Duel
+                </button>
+                <button onclick="startGame(4)" class="w-full bg-gradient-to-r from-purple-400 to-purple-500 hover:from-purple-500 hover:to-purple-600 text-white font-bold text-2xl py-4 rounded-2xl shadow-[0_6px_0_#581c87] active:shadow-none active:translate-y-[6px] transition-all brand-font tracking-wide">
+                    🛡️ Mode Squad (4P)
+                </button>
+            </div>
             
-            <div class="mt-6 text-xs text-blue-300 text-left bg-blue-900 bg-opacity-50 p-3 rounded-lg">
-                <p><strong>Cara Bermain:</strong></p>
-                <ul class="list-disc pl-4 mt-1">
-                    <li>Ikan melompat ke kolam.</li>
-                    <li>Pilih jawaban pembagian yang benar!</li>
-                    <li>Benar = Ikan gembira, lanjut ke soal baru.</li>
-                    <li>Salah = Air keruh, ikan tenggelam.</li>
-                </ul>
+            <div class="flex items-center justify-center gap-3 text-blue-100 bg-blue-900/40 p-3 rounded-xl">
+                <span class="font-bold">🎵 Musik Latar (BGM):</span>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="bgm-toggle" checked class="sr-only peer">
+                    <div class="w-11 h-6 bg-gray-400 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-400"></div>
+                </label>
             </div>
         </div>
     </div>
 
-    <!-- Game Container (Grid) -->
-    <div id="game-container" style="display: none;">
-        <!-- Player Views will be injected here by JS -->
+    <div id="game-container">
+        <!-- Element Canvas dan UI Pemain akan diinjeksi via JavaScript -->
     </div>
 
     <script>
-        // --- AUDIO SYSTEM (Synthesized to avoid external assets) ---
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        
+        // Menghasilkan suara tanpa file eksternal agar kode tetap berdiri sendiri
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        const audioCtx = new AudioContext();
+
         function playTone(freq, type, duration, vol=0.1) {
             if (audioCtx.state === 'suspended') audioCtx.resume();
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
+            
             osc.type = type;
             osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
             
-            gain.gain.setValueAtTime(vol, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+            // Envelope agar suara halus
+            gain.gain.setValueAtTime(0, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(vol, audioCtx.currentTime + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
             
             osc.connect(gain);
             gain.connect(audioCtx.destination);
@@ -268,295 +141,327 @@
             osc.stop(audioCtx.currentTime + duration);
         }
 
+        // Generator White Noise untuk efek cipratan air (Splash)
+        function playNoise(duration, vol=0.1) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const bufferSize = audioCtx.sampleRate * duration;
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                data[i] = Math.random() * 2 - 1;
+            }
+            const noise = audioCtx.createBufferSource();
+            noise.buffer = buffer;
+            
+            // Lowpass filter agar noise terdengar seperti air tumpul (bukan statis TV)
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.value = 800;
+            
+            const gain = audioCtx.createGain();
+            gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+            
+            noise.connect(filter);
+            filter.connect(gain);
+            gain.connect(audioCtx.destination);
+            noise.start();
+        }
+
         const sfx = {
             jump: () => {
-                playTone(300, 'sine', 0.1, 0.1);
-                setTimeout(() => playTone(400, 'sine', 0.2, 0.1), 50);
+                playTone(300, 'sine', 0.15, 0.1);
+                setTimeout(() => playTone(450, 'sine', 0.15, 0.1), 50);
             },
             correct: () => {
-                playTone(523.25, 'triangle', 0.1, 0.1); // C5
-                setTimeout(() => playTone(659.25, 'triangle', 0.1, 0.1), 100); // E5
-                setTimeout(() => playTone(783.99, 'triangle', 0.3, 0.15), 200); // G5
+                playTone(523.25, 'triangle', 0.1, 0.1); // Nada C5
+                setTimeout(() => playTone(659.25, 'triangle', 0.1, 0.1), 100); // Nada E5
+                setTimeout(() => playTone(783.99, 'triangle', 0.3, 0.15), 200); // Nada G5
             },
             wrong: () => {
-                playTone(200, 'sawtooth', 0.3, 0.1);
-                setTimeout(() => playTone(150, 'sawtooth', 0.5, 0.1), 150);
+                playTone(150, 'sawtooth', 0.3, 0.1);
+                setTimeout(() => playTone(100, 'sawtooth', 0.4, 0.15), 150);
             },
-            splash: () => {
-                // Noise burst for splash
-                if (audioCtx.state === 'suspended') audioCtx.resume();
-                const bufferSize = audioCtx.sampleRate * 0.2; // 0.2 seconds
-                const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-                const data = buffer.getChannelData(0);
-                for (let i = 0; i < bufferSize; i++) {
-                    data[i] = Math.random() * 2 - 1;
-                }
-                const noise = audioCtx.createBufferSource();
-                noise.buffer = buffer;
-                
-                // Filter for water sound
-                const filter = audioCtx.createBiquadFilter();
-                filter.type = 'lowpass';
-                filter.frequency.value = 1000;
-                
-                const gain = audioCtx.createGain();
-                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
-                
-                noise.connect(filter);
-                filter.connect(gain);
-                gain.connect(audioCtx.destination);
-                noise.start();
-            }
+            splash: () => playNoise(0.4, 0.3)
         };
 
-        // --- MATH LOGIC ---
-        function generateDivisionProblem() {
-            // Target Class 5 SD: Dividends up to ~100, Divisors up to 10
-            const divisor = Math.floor(Math.random() * 9) + 2; // 2 to 10
-            const quotient = Math.floor(Math.random() * 10) + 1; // 1 to 10
+        // Sistem Background Music (BGM) loop sederhana
+        let bgmInterval = null;
+        function toggleBGM(forceState = null) {
+            if (bgmInterval) {
+                clearInterval(bgmInterval);
+                bgmInterval = null;
+            }
+            if (forceState === false) return;
+            
+            // Arpeggio santai
+            const notes = [261.63, 329.63, 392.00, 523.25, 392.00, 329.63]; 
+            let step = 0;
+            bgmInterval = setInterval(() => {
+                playTone(notes[step % notes.length], 'sine', 0.4, 0.015); // Volume sangat rendah agar tidak mengganggu
+                step++;
+            }, 600);
+        }
+
+        function generateMathProblem() {
+            // Target Kelas 5 SD: Pembagian bilangan sampai ~200, pembagi 2-15
+            const divisor = Math.floor(Math.random() * 14) + 2; // 2 hingga 15
+            const quotient = Math.floor(Math.random() * 19) + 2; // 2 hingga 20
             const dividend = divisor * quotient;
             
-            // Generate wrong answers
+            // Generate 3 jawaban salah (distractor)
             let answers = new Set([quotient]);
             while(answers.size < 4) {
-                let offset = Math.floor(Math.random() * 5) + 1;
-                let wrong = Math.random() > 0.5 ? quotient + offset : quotient - offset;
+                let offset = Math.floor(Math.random() * 10) + 1;
+                // Kadang lebih, kadang kurang dari jawaban benar
+                let wrong = Math.random() > 0.5 ? quotient + offset : Math.abs(quotient - offset);
                 if(wrong > 0 && wrong !== quotient) answers.add(wrong);
             }
             
-            let answerArray = Array.from(answers);
-            // Shuffle
-            for (let i = answerArray.length - 1; i > 0; i--) {
+            let options = Array.from(answers);
+            // Acak urutan array (Fisher-Yates shuffle)
+            for (let i = options.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
-                [answerArray[i], answerArray[j]] = [answerArray[j], answerArray[i]];
+                [options[i], options[j]] = [options[j], options[i]];
             }
-
+            
             return {
                 text: `${dividend} ÷ ${divisor} = ?`,
                 correct: quotient,
-                options: answerArray
+                options: options
             };
         }
 
-        // --- UTILS ---
         function toggleFullScreen() {
             if (!document.fullscreenElement) {
                 document.documentElement.requestFullscreen().catch(err => {
-                    console.log(`Error attempting to enable full-screen mode: ${err.message}`);
+                    console.log(`Gagal masuk mode fullscreen: ${err.message}`);
                 });
             } else {
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                }
+                if (document.exitFullscreen) document.exitFullscreen();
             }
         }
 
-        // --- GAME ENGINE ---
+        function goHome() {
+            document.getElementById('game-container').style.display = 'none';
+            document.getElementById('main-menu').style.display = 'flex';
+            document.getElementById('home-btn').style.display = 'none';
+            
+            // Hapus instance pemain agar tidak makan memori di background
+            players.forEach(p => p.destroy());
+            players = [];
+            toggleBGM(false); // Matikan BGM
+            
+            if (document.fullscreenElement) document.exitFullscreen();
+        }
+
+        // Global callback untuk tombol "Main Lagi" dari dalam HTML dinamis
+        window.restartPlayer = function(id) {
+            const p = players.find(p => p.id === id);
+            if (p) p.restart();
+        }
+
+        // Setiap instance menangani 1 bagian layar (Split Screen)
         class PlayerInstance {
             constructor(id, container, colorTheme) {
                 this.id = id;
                 this.container = container;
-                this.colorTheme = colorTheme;
+                this.colorTheme = colorTheme; // Warna identitas pemain (ikan)
                 
-                // State
                 this.score = 0;
                 this.isGameOver = false;
-                this.problem = null;
+                this.deadWaterLevel = 0; // Efek visual saat mati
                 
-                // Physics/Animation State
-                this.fish = { x: 50, y: 150, vy: 0, vx: 0, state: 'idle', jumpTargetY: 0, rotation: 0 }; // states: idle, jumping, happy, dead
+                // Status Fisika Ikan & Lingkungan
+                this.fish = { x: 0, y: 0, state: 'idle', jumpFrame: 0, jumpDuration: 30 }; 
+                // state: 'idle', 'jumping', 'happy', 'falling', 'hidden', 'spawning', 'dead'
                 this.platforms = [];
-                this.particles = [];
-                this.waterLevel = 0; // 0 is normal, 1 is fully black/dead
-                this.rainIntensity = 0;
+                this.particles = []; // Array untuk efek cipratan air
+                this.waterY = 0; // Ketinggian air dinamis
                 
                 this.setupDOM();
                 this.resize();
-                this.generateNewProblem(true); // Initial setup
                 
-                // Bind methods
+                this.generateProblem();
+                
+                // Observer untuk mendeteksi perubahan ukuran layar/orientasi
+                this.resizeObserver = new ResizeObserver(() => {
+                    this.resize();
+                    if(!this.isGameOver && ['idle', 'hidden', 'spawning'].includes(this.fish.state)) {
+                        this.updatePlatformPositions();
+                        if (this.fish.state === 'idle') this.resetFishPosition();
+                    }
+                });
+                this.resizeObserver.observe(this.wrapper);
+                
+                // Binding loop animasi
                 this.loop = this.loop.bind(this);
                 this.reqId = requestAnimationFrame(this.loop);
             }
 
             setupDOM() {
-                // Create Player Wrapper
+                // Wrapper utama
                 this.wrapper = document.createElement('div');
-                this.wrapper.className = 'player-view';
+                this.wrapper.className = 'player-view relative overflow-hidden h-full w-full sky-bg transition-colors duration-1000 border-2 border-slate-700/50 rounded-xl rounded-lg';
                 
-                // Canvas
+                // Canvas untuk rendering game layer
                 this.canvas = document.createElement('canvas');
+                this.canvas.className = 'absolute inset-0 w-full h-full z-0';
                 this.ctx = this.canvas.getContext('2d');
                 this.wrapper.appendChild(this.canvas);
                 
-                // UI Layer
+                // Layer UI (HTML) di atas canvas
                 this.uiLayer = document.createElement('div');
-                this.uiLayer.className = 'ui-layer';
+                this.uiLayer.className = 'ui-layer absolute inset-0 flex flex-col justify-between z-10 pointer-events-none pb-2 sm:pb-6';
                 
-                // Header
+                // Header (Status Bar)
                 const header = document.createElement('div');
-                header.className = 'player-header';
+                header.className = 'flex justify-between items-center w-full px-4 py-2 bg-black/40 backdrop-blur text-white pointer-events-auto rounded-b-xl shadow-md border-b border-white/20';
                 header.innerHTML = `
-                    <span class="font-bold text-white text-sm">Pemain ${this.id}</span>
-                    <span class="font-bold text-yellow-300 text-sm">Skor: <span id="score-${this.id}">0</span></span>
+                    <div class="flex items-center gap-2">
+                        <div class="w-4 h-4 rounded-full" style="background-color: ${this.colorTheme}; box-shadow: 0 0 10px ${this.colorTheme}"></div>
+                        <span class="font-bold text-sm md:text-base brand-font tracking-wide">Pemain ${this.id}</span>
+                    </div>
+                    <span class="font-bold text-sm md:text-base text-yellow-300 brand-font">Skor: <span id="score-${this.id}">0</span></span>
                 `;
                 this.uiLayer.appendChild(header);
                 
-                // Question
+                // Kotak Soal
                 this.questionEl = document.createElement('div');
-                this.questionEl.className = 'question-box brand-font';
+                this.questionEl.className = 'self-center mt-6 bg-white/95 border-4 border-blue-400 text-blue-900 px-6 py-2 rounded-full text-2xl md:text-4xl shadow-xl z-20 pointer-events-auto transition-all duration-300 transform scale-100 brand-font';
                 this.uiLayer.appendChild(this.questionEl);
                 
-                // Controls
+                // Area Tombol Kontrol (Jawaban)
                 this.controlsEl = document.createElement('div');
-                this.controlsEl.className = 'controls-area';
+                this.controlsEl.className = 'controls-area grid grid-cols-2 md:grid-cols-4 gap-2 w-full px-2 md:px-6 mt-auto z-20 pointer-events-auto transition-opacity duration-300';
                 this.uiLayer.appendChild(this.controlsEl);
 
-                // Game Over Screen
-                this.gameOverEl = document.createElement('div');
-                this.gameOverEl.className = 'game-over-screen';
-                this.gameOverEl.innerHTML = `
-                    <h2 class="text-3xl text-red-500 mb-2 brand-font drop-shadow-md">Yahh, Salah!</h2>
-                    <p class="text-xl text-white mb-4">Skor Akhir: <span id="final-score-${this.id}">0</span></p>
-                    <button class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-full" onclick="restartPlayer(${this.id})">Coba Lagi</button>
-                `;
-                this.wrapper.appendChild(this.gameOverEl);
-                
                 this.wrapper.appendChild(this.uiLayer);
                 this.container.appendChild(this.wrapper);
-                
-                // Event Listener for resize
-                this.resizeObserver = new ResizeObserver(() => this.resize());
-                this.resizeObserver.observe(this.wrapper);
             }
 
             resize() {
                 const rect = this.wrapper.getBoundingClientRect();
+                // Mengatur resolusi internal canvas agar tajam
                 this.canvas.width = rect.width;
                 this.canvas.height = rect.height;
                 this.cw = rect.width;
                 this.ch = rect.height;
-                
-                // Recalculate positions based on new size
-                this.baseY = this.ch * 0.7; // Water/Platform line
-                if(this.fish.state === 'idle') {
-                    this.fish.y = this.baseY - 20;
-                    this.fish.x = this.cw / 2;
-                }
             }
 
-            generateNewProblem(isInitial = false) {
-                this.problem = generateDivisionProblem();
+            generateProblem() {
+                this.problem = generateMathProblem();
                 this.questionEl.textContent = this.problem.text;
+                
+                // Efek pop-in saat soal baru muncul
                 this.questionEl.style.transform = 'scale(1.2)';
                 setTimeout(() => this.questionEl.style.transform = 'scale(1)', 200);
 
-                // Render buttons
                 this.controlsEl.innerHTML = '';
-                this.problem.options.forEach((opt, index) => {
-                    const btn = document.createElement('button');
-                    btn.className = 'answer-btn';
+                this.problem.options.forEach((opt, idx) => {
+                    let btn = document.createElement('button');
+                    // Styling tombol agar terlihat menyatu dengan tema air
+                    btn.className = 'answer-btn bg-white/90 border-4 border-blue-500 rounded-2xl text-blue-900 brand-font text-xl md:text-2xl py-3 shadow-lg';
                     btn.textContent = opt;
-                    btn.onclick = () => this.handleAnswer(opt, index);
+                    btn.onclick = () => this.handleAnswer(opt, idx, btn);
                     this.controlsEl.appendChild(btn);
                 });
-
-                // Set up visual platforms based on screen width
-                this.platforms = [];
-                const padding = this.cw * 0.1;
-                const availableWidth = this.cw - (padding * 2);
-                const spacing = availableWidth / 3;
                 
-                this.problem.options.forEach((opt, index) => {
-                    this.platforms.push({
-                        x: padding + (spacing * index),
-                        y: this.baseY + (isInitial ? 0 : this.ch), // Start below screen if not initial
-                        targetY: this.baseY,
-                        text: opt,
-                        isCorrect: opt === this.problem.correct
-                    });
-                });
-                
-                // Reset fish position if not jumping
-                if(isInitial) {
-                    this.fish.x = this.cw / 2;
-                    this.fish.y = this.baseY - 20;
-                }
-            }
-
-            handleAnswer(selectedAns, btnIndex) {
-                if (this.fish.state !== 'idle' || this.isGameOver) return; // Prevent multiple clicks
-
-                // Disable buttons
-                Array.from(this.controlsEl.children).forEach(btn => btn.disabled = true);
-
-                const isCorrect = selectedAns === this.problem.correct;
-                const targetPlatform = this.platforms[btnIndex];
-
-                // Start Jump Animation
-                this.fish.state = 'jumping';
-                sfx.jump();
-                
-                // Calculate jump physics trajectory (parabola)
-                const startX = this.fish.x;
-                const startY = this.fish.y;
-                const targetX = targetPlatform.x;
-                const targetY = targetPlatform.targetY - 20; // Land slightly above platform
-                
-                const jumpDuration = 40; // frames
-                let frame = 0;
-                
-                this.fish.isCorrectChoice = isCorrect;
-
-                const jumpInterval = setInterval(() => {
-                    frame++;
-                    let progress = frame / jumpDuration;
-                    
-                    // Linear X
-                    this.fish.x = startX + (targetX - startX) * progress;
-                    
-                    // Parabolic Y (jump arc)
-                    const height = 100; // Jump height
-                    this.fish.y = startY + (targetY - startY) * progress - Math.sin(progress * Math.PI) * height;
-                    
-                    // Rotation
-                    this.fish.rotation = (targetX > startX ? 1 : -1) * Math.sin(progress * Math.PI) * 0.5;
-
-                    if (frame >= jumpDuration) {
-                        clearInterval(jumpInterval);
-                        this.fish.rotation = 0;
-                        this.fish.y = targetY;
-                        this.fish.x = targetX;
-                        
-                        this.resolveAnswer(isCorrect);
+                // Tunggu 1 frame agar DOM selesai me-render tombol untuk mengambil koordinat pastinya
+                requestAnimationFrame(() => {
+                    if(this.fish.state !== 'hidden') {
+                        this.updatePlatformPositions();
+                        this.resetFishPosition();
                     }
-                }, 16);
+                });
             }
 
-            resolveAnswer(isCorrect) {
+            // Sinkronisasi koordinat Tombol HTML dengan Grafis Kolam di Canvas
+            updatePlatformPositions() {
+                const wrapperRect = this.wrapper.getBoundingClientRect();
+                const btns = this.controlsEl.querySelectorAll('button');
+                
+                this.platforms = Array.from(btns).map((btn, i) => {
+                    const rect = btn.getBoundingClientRect();
+                    return {
+                        // Posisi kolam dihitung tepat di tengah bawah tombol HTML
+                        x: rect.left - wrapperRect.left + rect.width / 2,
+                        y: rect.top - wrapperRect.top + rect.height + (this.ch > 600 ? 15 : 5), 
+                        btn: btn,
+                        color: '#0284c7', // Warna dasar air kolam (sky-600)
+                        isCorrect: this.problem.options[i] === this.problem.correct
+                    };
+                });
+
+                // Tentukan level air global berdasarkan posisi kolam terendah
+                let maxPlatformY = 0;
+                if (this.platforms.length > 0) {
+                    maxPlatformY = Math.max(...this.platforms.map(p => p.y));
+                }
+                this.targetWaterY = maxPlatformY > 0 ? maxPlatformY - 10 : this.ch - 30;
+                if (!this.waterY) this.waterY = this.targetWaterY;
+            }
+
+            resetFishPosition() {
+                this.fish.x = this.cw / 2;
+                this.fish.y = this.ch - 30; // Mulai dari bawah air
+                this.fish.state = 'idle';
+            }
+
+            handleAnswer(selectedAns, idx, btn) {
+                // Cegah spam klik
+                if (this.fish.state !== 'idle' && this.fish.state !== 'spawning') return;
+                
+                // Nonaktifkan semua tombol
+                const btns = this.controlsEl.querySelectorAll('button');
+                btns.forEach(b => b.disabled = true);
+                
+                // Konfigurasi kurva lompatan
+                this.fish.state = 'jumping';
+                this.fish.startX = this.fish.x;
+                this.fish.startY = this.fish.y;
+                
+                const targetPlatform = this.platforms[idx];
+                this.fish.targetX = targetPlatform.x;
+                // Lompat sedikit ke atas kolam untuk pendaratan yang pas
+                this.fish.targetY = targetPlatform.y - 15;
+                
+                this.fish.jumpFrame = 0;
+                this.fish.jumpDuration = 30; // Sekitar 0.5 detik pada 60fps
+                this.fish.isCorrectTarget = targetPlatform.isCorrect;
+                this.fish.targetPlatform = targetPlatform;
+                
+                sfx.jump();
+            }
+
+            resolveAnswer() {
+                const isCorrect = this.fish.isCorrectTarget;
+                
                 if (isCorrect) {
-                    sfx.correct();
+                    this.fish.state = 'happy';
                     this.score += 10;
                     document.getElementById(`score-${this.id}`).textContent = this.score;
+                    sfx.correct();
+                    this.createSplash(this.fish.x, this.fish.y, '#38bdf8'); // Cipratan biru
                     
-                    this.fish.state = 'happy';
-                    this.createSplash(this.fish.x, this.fish.y, '#3b82f6');
-                    
-                    // Transition to next problem
+                    // Transisi ke soal berikutnya
                     setTimeout(() => {
-                        this.transitionToNext();
+                        this.fish.state = 'falling';
+                        this.controlsEl.style.opacity = '0';
+                        this.questionEl.style.opacity = '0';
                     }, 1000);
 
                 } else {
-                    sfx.wrong();
                     this.fish.state = 'dead';
                     this.isGameOver = true;
+                    // Ubah kolam menjadi hitam beracun
+                    this.fish.targetPlatform.color = '#111827'; 
+                    sfx.wrong();
                     this.createSplash(this.fish.x, this.fish.y, '#111827');
                     
-                    // Environmental changes for wrong answer
-                    this.waterLevel = 1; 
-                    this.rainIntensity = 100;
+                    // Ubah tema menjadi gelap (Hujan/Malam)
+                    this.wrapper.classList.remove('sky-bg');
+                    this.wrapper.classList.add('night-bg');
                     
                     setTimeout(() => {
                         this.showGameOver();
@@ -564,244 +469,330 @@
                 }
             }
 
-            transitionToNext() {
-                // Drop old platforms
-                this.platforms.forEach(p => p.targetY = this.ch + 100);
-                
-                // Drop fish slightly
-                this.fish.state = 'idle';
-                
-                setTimeout(() => {
-                    this.generateNewProblem();
-                    // Move fish back to center for next jump smoothly
-                    this.fish.x = this.cw / 2; 
-                }, 500);
-            }
-
             showGameOver() {
-                document.getElementById(`final-score-${this.id}`).textContent = this.score;
-                this.gameOverEl.classList.add('active');
+                this.gameOverEl = document.createElement('div');
+                this.gameOverEl.className = 'absolute inset-0 bg-black/80 flex flex-col items-center justify-center z-50 p-4 text-center backdrop-blur-sm opacity-0 transition-opacity duration-500';
+                this.gameOverEl.innerHTML = `
+                    <h2 class="text-4xl md:text-5xl text-red-500 font-extrabold mb-2 brand-font drop-shadow-md">Tenggelam!</h2>
+                    <p class="text-xl md:text-2xl text-white mb-6">Skor Akhir: <span class="text-yellow-400 font-bold brand-font text-3xl">${this.score}</span></p>
+                    <button onclick="restartPlayer(${this.id})" class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold py-3 px-8 rounded-full text-xl shadow-lg border-2 border-blue-300 transition-transform transform hover:scale-110 active:scale-95 brand-font tracking-wide">
+                        🔄 Main Lagi
+                    </button>
+                `;
+                this.uiLayer.appendChild(this.gameOverEl);
+                
+                // Trigger animasi fade in
+                setTimeout(() => this.gameOverEl.classList.remove('opacity-0'), 10);
             }
 
             restart() {
+                if (this.gameOverEl) {
+                    this.gameOverEl.remove();
+                    this.gameOverEl = null;
+                }
                 this.score = 0;
-                this.isGameOver = false;
-                this.waterLevel = 0;
-                this.rainIntensity = 0;
-                this.fish.state = 'idle';
-                this.fish.rotation = 0;
-                this.particles = [];
                 document.getElementById(`score-${this.id}`).textContent = this.score;
-                this.gameOverEl.classList.remove('active');
-                this.generateNewProblem(true);
+                this.isGameOver = false;
+                this.deadWaterLevel = 0;
+                
+                // Kembalikan tema cerah
+                this.wrapper.classList.remove('night-bg');
+                this.wrapper.classList.add('sky-bg');
+                this.controlsEl.style.opacity = '1';
+                this.questionEl.style.opacity = '1';
+                
+                this.generateProblem();
+                this.resetFishPosition();
             }
 
-            createSplash(x, y, color) {
+            createSplash(x, y, color = '#ffffff') {
                 sfx.splash();
-                for(let i=0; i<15; i++) {
+                for (let i = 0; i < 25; i++) {
                     this.particles.push({
                         x: x,
                         y: y,
-                        vx: (Math.random() - 0.5) * 10,
-                        vy: (Math.random() - 1) * 10,
+                        vx: (Math.random() - 0.5) * 12,
+                        vy: (Math.random() - 1) * 10 - 2, // Lontaran ke atas
                         life: 1,
                         color: color,
-                        size: Math.random() * 5 + 2
+                        size: Math.random() * 4 + 2
                     });
                 }
             }
 
-            // --- DRAWING ROUTINES ---
-            drawFish(ctx, x, y, state, rotation) {
+            drawPlatform(ctx, x, y, color) {
+                // Menyesuaikan ukuran kolam agar tidak keluar frame saat layar sempit
+                const radiusX = Math.min(45, this.cw / (this.platforms.length > 2 ? 8 : 4));
+                const radiusY = radiusX * 0.4; // Perspektif isometrik
+                
                 ctx.save();
                 ctx.translate(x, y);
-                ctx.rotate(rotation);
-
-                // Body
-                ctx.fillStyle = state === 'dead' ? '#9ca3af' : this.colorTheme;
+                
+                // Bayangan kolam
+                ctx.fillStyle = 'rgba(0,0,0,0.2)';
                 ctx.beginPath();
-                ctx.ellipse(0, 0, 20, 15, 0, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.lineWidth = 2;
-                ctx.strokeStyle = state === 'dead' ? '#4b5563' : '#fff';
-                ctx.stroke();
-
-                // Tail
-                ctx.beginPath();
-                ctx.moveTo(-18, 0);
-                ctx.lineTo(-30, -10);
-                ctx.lineTo(-30, 10);
-                ctx.closePath();
-                ctx.fill();
-                ctx.stroke();
-
-                // Fin
-                ctx.beginPath();
-                ctx.moveTo(0, -15);
-                ctx.lineTo(-5, -25);
-                ctx.lineTo(5, -15);
-                ctx.fill();
-
-                // Eye
-                ctx.fillStyle = 'white';
-                ctx.beginPath();
-                ctx.arc(10, -5, 5, 0, Math.PI * 2);
-                ctx.fill();
-
-                // Pupil
-                ctx.fillStyle = state === 'dead' ? 'transparent' : 'black';
-                ctx.beginPath();
-                ctx.arc(12, -5, 2, 0, Math.PI * 2);
+                ctx.ellipse(0, radiusY * 0.5, radiusX + 2, radiusY + 2, 0, 0, Math.PI * 2);
                 ctx.fill();
                 
-                // Dead Eye (X)
-                if (state === 'dead') {
-                    ctx.strokeStyle = 'black';
+                // Bentuk Dasar Kolam (Teratai abstrak)
+                ctx.fillStyle = color;
+                ctx.strokeStyle = color === '#111827' ? '#374151' : '#0369a1'; // Border menyesuaikan warna
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.ellipse(0, 0, radiusX, radiusY, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+                
+                // Ripple effect (gelombang dalam kolam)
+                if (color !== '#111827') { 
+                    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
                     ctx.lineWidth = 2;
                     ctx.beginPath();
-                    ctx.moveTo(7, -8); ctx.lineTo(13, -2);
-                    ctx.moveTo(13, -8); ctx.lineTo(7, -2);
+                    ctx.ellipse(0, 0, radiusX * 0.6, radiusY * 0.6, 0, 0, Math.PI * 2);
                     ctx.stroke();
                 }
-
-                // Mouth
-                ctx.beginPath();
-                if (state === 'happy') {
-                    ctx.arc(15, 5, 5, 0, Math.PI); // Smile
-                } else if (state === 'dead') {
-                    ctx.moveTo(12, 8); ctx.lineTo(18, 8); // Straight line
-                } else {
-                    ctx.arc(16, 5, 3, 0, Math.PI); // Small open mouth
-                }
-                ctx.stroke();
-
+                
                 ctx.restore();
             }
 
-            drawPlatform(ctx, x, y, text) {
-                // Lilypad shape
+            drawFish(ctx, x, y, state) {
                 ctx.save();
                 ctx.translate(x, y);
                 
-                // Shadow
-                ctx.fillStyle = 'rgba(0,0,0,0.2)';
-                ctx.beginPath();
-                ctx.ellipse(2, 5, 30, 10, 0, 0, Math.PI * 2);
-                ctx.fill();
-
-                // Pad
-                ctx.fillStyle = '#4ade80';
-                ctx.strokeStyle = '#166534';
+                // Rotasi Ikan: Jika lompat, miring ke atas/bawah sesuai trayektori
+                let rot = 0;
+                if (state === 'jumping') {
+                    let t = this.fish.jumpFrame / this.fish.jumpDuration;
+                    rot = (t - 0.5) * (Math.PI / 3.5); // Mengangguk dari atas ke bawah
+                } else if (state === 'dead') {
+                    rot = Math.PI; // Terbalik karena mati
+                }
+                ctx.rotate(rot);
+                
+                // Pewarnaan Ikan (Abu-abu saat mati)
+                const bodyColor = state === 'dead' ? '#9ca3af' : this.colorTheme;
+                const strokeColor = state === 'dead' ? '#4b5563' : '#fff';
+                
+                // Tubuh (Elips)
+                ctx.fillStyle = bodyColor;
+                ctx.strokeStyle = strokeColor;
                 ctx.lineWidth = 2;
                 ctx.beginPath();
-                // Draw a circle with a slice cut out
-                ctx.arc(0, 0, 30, 0.2, Math.PI * 2 - 0.2); 
-                ctx.lineTo(0,0);
-                ctx.closePath();
-                // Flatten it to look isometric
-                ctx.scale(1, 0.35); 
+                ctx.ellipse(0, 0, 22, 14, 0, 0, Math.PI*2);
                 ctx.fill();
+                ctx.stroke();
+                
+                // Ekor (Segitiga)
+                ctx.beginPath();
+                ctx.moveTo(-18, 0);
+                ctx.lineTo(-35, -12);
+                ctx.lineTo(-35, 12);
+                ctx.fill();
+                ctx.stroke();
+                
+                // Sirip atas
+                ctx.beginPath();
+                ctx.moveTo(-5, -13);
+                ctx.lineTo(-10, -22);
+                ctx.lineTo(5, -13);
+                ctx.fill();
+                ctx.stroke();
+
+                // Mata (Putih)
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.arc(10, -4, 5, 0, Math.PI*2);
+                ctx.fill();
+                
+                // Pupil atau Mata Mati (X)
+                if (state === 'dead') {
+                    ctx.strokeStyle = '#111827';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(7, -7); ctx.lineTo(13, -1);
+                    ctx.moveTo(13, -7); ctx.lineTo(7, -1);
+                    ctx.stroke();
+                } else {
+                    ctx.fillStyle = 'black';
+                    ctx.beginPath();
+                    ctx.arc(12, -4, 2, 0, Math.PI*2);
+                    ctx.fill();
+                }
+
+                // Mulut
+                ctx.strokeStyle = strokeColor;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                if (state === 'happy') {
+                    ctx.arc(15, 4, 6, 0, Math.PI); // Tersenyum lebar
+                } else if (state === 'dead') {
+                    ctx.moveTo(14, 6); ctx.lineTo(20, 6); // Rata
+                } else {
+                    ctx.arc(17, 5, 2, 0, Math.PI); // Mulut terbuka kecil (O)
+                }
                 ctx.stroke();
                 
                 ctx.restore();
             }
 
             drawEnvironment(ctx) {
-                // Background Gradient is handled by CSS, we draw water here
+                // Penghalusan transisi level air
+                if (this.targetWaterY && !this.isGameOver) {
+                    this.waterY += (this.targetWaterY - this.waterY) * 0.1;
+                }
                 
-                // Water surface
-                const waterY = this.baseY;
-                
-                // Interpolate water color based on waterLevel (0 to 1)
-                // Normal: #3b82f6 (blue), Dead: #111827 (dark gray/black)
-                const r = Math.floor(59 + (17 - 59) * this.waterLevel);
-                const g = Math.floor(130 + (24 - 130) * this.waterLevel);
-                const b = Math.floor(246 + (39 - 246) * this.waterLevel);
-                const waterColor = `rgba(${r},${g},${b},0.8)`;
-                
-                ctx.fillStyle = waterColor;
-                ctx.fillRect(0, waterY, this.cw, this.ch - waterY);
+                let renderWaterY = this.waterY;
 
-                // Water waves (simple sine wave)
-                ctx.fillStyle = `rgba(255,255,255,0.2)`;
+                // Jika Game Over, air akan naik dan menutupi layar perlahan dengan warna gelap
+                if (this.isGameOver) {
+                    this.deadWaterLevel += 0.005;
+                    if (this.deadWaterLevel > 1) this.deadWaterLevel = 1;
+                    
+                    renderWaterY = this.waterY - (this.ch * this.deadWaterLevel);
+                    
+                    // Air keruh/gelap
+                    ctx.fillStyle = `rgba(15, 23, 42, ${this.deadWaterLevel * 0.9})`; 
+                    ctx.fillRect(0, 0, this.cw, this.ch);
+                }
+
+                // Gambar Air bergelombang (Sine wave)
+                // Warna air normal menyesuaikan state
+                ctx.fillStyle = this.isGameOver ? '#1e293b' : '#38bdf8'; 
                 ctx.beginPath();
-                ctx.moveTo(0, waterY);
+                ctx.moveTo(0, renderWaterY);
                 for (let i = 0; i <= this.cw; i += 20) {
-                    ctx.lineTo(i, waterY + Math.sin(i * 0.05 + Date.now() * 0.005) * 5);
+                    // Animasi gelombang berjalan maju
+                    ctx.lineTo(i, renderWaterY + Math.sin(i * 0.05 + Date.now() * 0.004) * 5);
                 }
                 ctx.lineTo(this.cw, this.ch);
                 ctx.lineTo(0, this.ch);
                 ctx.fill();
 
-                // Rain
-                if (this.rainIntensity > 0) {
-                    ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+                // Layer permukaan air semi transparan (refleksi cerah)
+                if (!this.isGameOver) {
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+                    ctx.beginPath();
+                    ctx.moveTo(0, renderWaterY + 5);
+                    for (let i = 0; i <= this.cw; i += 20) {
+                        ctx.lineTo(i, renderWaterY + 5 + Math.sin(i * 0.06 - Date.now() * 0.003) * 4);
+                    }
+                    ctx.lineTo(this.cw, this.ch);
+                    ctx.lineTo(0, this.ch);
+                    ctx.fill();
+                }
+
+                // Efek Hujan jika Game Over
+                if (this.isGameOver) {
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
                     ctx.lineWidth = 1;
                     ctx.beginPath();
-                    for(let i=0; i<this.rainIntensity; i++) {
+                    // Menggambar 60 garis rintik hujan acak
+                    for (let i = 0; i < 60; i++) { 
                         let rx = Math.random() * this.cw;
                         let ry = Math.random() * this.ch;
                         ctx.moveTo(rx, ry);
-                        ctx.lineTo(rx - 5, ry + 15);
+                        ctx.lineTo(rx - 8, ry + 25); // Hujan miring
                     }
                     ctx.stroke();
                 }
             }
 
             loop() {
-                // Clear Canvas (let CSS background show through for sky)
+                // Bersihkan frame sebelumnya (latar CSS akan terlihat melalui bagian transparan)
                 this.ctx.clearRect(0, 0, this.cw, this.ch);
 
+                // 1. Gambar Lingkungan (Air & Hujan)
                 this.drawEnvironment(this.ctx);
 
-                // Update & Draw Platforms
+                // 2. Pembaruan Logika Lompat/Jatuh Ikan
+                if (this.fish.state === 'jumping') {
+                    this.fish.jumpFrame++;
+                    let t = this.fish.jumpFrame / this.fish.jumpDuration;
+                    if (t >= 1) t = 1;
+                    
+                    // Interpolasi Linear untuk sumbu X
+                    this.fish.x = this.fish.startX + (this.fish.targetX - this.fish.startX) * t;
+                    // Kurva Parabola (Sine) untuk ketinggian lompatan sumbu Y
+                    this.fish.y = this.fish.startY + (this.fish.targetY - this.fish.startY) * t - Math.sin(t * Math.PI) * 120;
+                    
+                    if (t === 1) {
+                        this.resolveAnswer();
+                    }
+                } 
+                else if (this.fish.state === 'falling') {
+                    // Animasi kolam dan ikan tenggelam ke bawah layar saat jawaban benar
+                    this.platforms.forEach(p => p.y += 8);
+                    this.fish.y += 8;
+                    
+                    if (this.fish.y > this.ch + 80) {
+                        this.fish.state = 'hidden';
+                        this.generateProblem(); // Siapkan soal baru di background
+                        
+                        // Jeda sejenak sebelum spawn ulang
+                        setTimeout(() => {
+                            this.controlsEl.style.opacity = '1';
+                            this.questionEl.style.opacity = '1';
+                            
+                            this.fish.state = 'spawning';
+                            this.fish.x = this.cw / 2;
+                            this.fish.y = this.ch + 50; // Mulai dari bawah layar
+                        }, 200);
+                    }
+                }
+                else if (this.fish.state === 'spawning') {
+                    // Animasi ikan muncul kembali (meluncur ke atas)
+                    this.fish.y -= 10;
+                    if (this.fish.y <= this.ch - 30) {
+                        this.fish.y = this.ch - 30;
+                        this.fish.state = 'idle';
+                    }
+                }
+
+                // 3. Gambar Kolam (Platforms)
                 this.platforms.forEach(p => {
-                    // Smooth move to target Y
-                    p.y += (p.targetY - p.y) * 0.1;
-                    this.drawPlatform(this.ctx, p.x, p.y, p.text);
+                    this.drawPlatform(this.ctx, p.x, p.y, p.color);
                 });
 
-                // Update & Draw Particles
+                // 4. Update & Gambar Partikel Cipratan (Splash)
                 for (let i = this.particles.length - 1; i >= 0; i--) {
                     let p = this.particles[i];
                     p.x += p.vx;
                     p.y += p.vy;
-                    p.vy += 0.5; // gravity
-                    p.life -= 0.02;
+                    p.vy += 0.6; // Gravitasi
+                    p.life -= 0.03; // Fade out
                     
                     if (p.life <= 0) {
                         this.particles.splice(i, 1);
-                        continue;
+                    } else {
+                        this.ctx.fillStyle = p.color;
+                        this.ctx.globalAlpha = p.life;
+                        this.ctx.beginPath();
+                        this.ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+                        this.ctx.fill();
+                        this.ctx.globalAlpha = 1; // Reset alpha
                     }
-                    
-                    this.ctx.fillStyle = p.color;
-                    this.ctx.globalAlpha = p.life;
-                    this.ctx.beginPath();
-                    this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-                    this.ctx.fill();
-                    this.ctx.globalAlpha = 1.0;
                 }
 
-                // Fish Animations (Idle bobbing, happy jumping)
+                // 5. Gambar Ikan Utama
                 let renderY = this.fish.y;
-                let renderRot = this.fish.rotation;
-                
-                if (this.fish.state === 'idle') {
-                    renderY += Math.sin(Date.now() * 0.005) * 5; // Bobbing
+                // Tambahan efek pergerakan statis
+                if (this.fish.state === 'idle' || this.fish.state === 'hidden') {
+                    renderY += Math.sin(Date.now() * 0.005) * 4; // Mengambang (Bobbing)
                 } else if (this.fish.state === 'happy') {
-                    // Small celebratory jumps
-                    renderY -= Math.abs(Math.sin(Date.now() * 0.01)) * 20;
+                    renderY -= Math.abs(Math.sin(Date.now() * 0.012)) * 20; // Melompat kecil kegirangan
                 } else if (this.fish.state === 'dead') {
-                    // Float up slightly dead belly up
-                    renderRot = Math.PI; // Upside down
-                    renderY = this.baseY - 10 + Math.sin(Date.now() * 0.003) * 3;
+                    renderY += Math.sin(Date.now() * 0.003) * 3; // Mengambang lambat
                 }
 
-                this.drawFish(this.ctx, this.fish.x, renderY, this.fish.state, renderRot);
+                if (this.fish.state !== 'hidden') {
+                    this.drawFish(this.ctx, this.fish.x, renderY, this.fish.state);
+                }
 
+                // Loop terus-menerus
                 this.reqId = requestAnimationFrame(this.loop);
             }
             
+            // Pembersihan memori saat pemain keluar ke menu
             destroy() {
                 cancelAnimationFrame(this.reqId);
                 this.resizeObserver.disconnect();
@@ -809,53 +800,39 @@
             }
         }
 
-        // --- GLOBAL GAME MANAGER ---
         let players = [];
-        const container = document.getElementById('game-container');
-        const mainMenu = document.getElementById('main-menu');
-        
-        // distinct colors for players
-        const playerColors = ['#f97316', '#ef4444', '#8b5cf6', '#14b8a6']; 
 
-        function startGame(numPlayers) {
-            // Setup Audio Context if needed (browsers require user interaction)
+        function startGame(mode) {
+            // Evaluasi Musik BGM dari pengaturan menu
+            const bgmCheckbox = document.getElementById('bgm-toggle');
+            if (bgmCheckbox.checked) toggleBGM(true);
+            else toggleBGM(false);
+            
+            // Mengaktifkan kembali konteks audio (dibutuhkan interaksi user oleh browser)
             if (audioCtx.state === 'suspended') audioCtx.resume();
-
-            mainMenu.style.display = 'none';
+            
+            // Ubah visibilitas UI
+            document.getElementById('main-menu').style.display = 'none';
+            document.getElementById('home-btn').style.display = 'block';
+            const container = document.getElementById('game-container');
             container.style.display = 'grid';
             
-            // Set Layout Class
-            container.className = ''; // reset
-            if (numPlayers === 1) container.classList.add('layout-solo');
-            else if (numPlayers === 2) container.classList.add('layout-duel');
-            else if (numPlayers === 4) container.classList.add('layout-squad');
-
-            // Clear old instances
+            // Atur Grid Layout
+            container.className = '';
+            if (mode === 1) container.classList.add('layout-solo');
+            if (mode === 2) container.classList.add('layout-duel');
+            if (mode === 4) container.classList.add('layout-squad');
+            
+            // Hapus game lama (jika ada)
             players.forEach(p => p.destroy());
             players = [];
-
-            // Initialize Players
-            for (let i = 0; i < numPlayers; i++) {
-                players.push(new PlayerInstance(i + 1, container, playerColors[i]));
+            
+            // Palet warna ceria untuk masing-masing ikan pemain
+            const colors = ['#f59e0b', '#ef4444', '#10b981', '#a855f7']; 
+            for (let i = 0; i < mode; i++) {
+                players.push(new PlayerInstance(i + 1, container, colors[i]));
             }
         }
-
-        // Global helper for the retry button in UI
-        window.restartPlayer = function(id) {
-            const player = players.find(p => p.id === id);
-            if (player) player.restart();
-        }
-
-        // Handle Escape key to return to menu
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && container.style.display !== 'none') {
-                container.style.display = 'none';
-                mainMenu.style.display = 'flex';
-                players.forEach(p => p.destroy());
-                players = [];
-                if (document.fullscreenElement) document.exitFullscreen();
-            }
-        });
 
     </script>
 </body>
